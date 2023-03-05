@@ -1,16 +1,23 @@
+
 <nav class="navbar navbar-dark bg-dark">
   <span class="navbar-brand mb-0 h1">DashboardOne</span>
 </nav>
 <div class="container-fluid">
   <div class="row">
     <div class="col-4">
-      <div class="chart"></div>
+      <div class="chart">
+        <app-chart1 [data]="data1"></app-chart1>
+      </div>
     </div>
     <div class="col-4">
-      <div class="chart"></div>
+      <div class="chart">
+        <app-chart2 [data]="data2$ | async"></app-chart2>
+      </div>
     </div>
     <div class="col-4">
-      <div class="chart"></div>
+      <div class="chart">
+        <app-chart3 [data]="data2$ | async"></app-chart3>
+      </div>
     </div>
   </div>
   <div class="row">
