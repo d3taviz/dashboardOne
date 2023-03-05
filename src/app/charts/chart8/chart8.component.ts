@@ -135,8 +135,6 @@ export class Chart8Component implements OnInit, OnDestroy {
 
   constructor(element: ElementRef, public dimensions: DimensionsService) {
     this.host = d3.select(element.nativeElement);
-    console.log(this);
-    
    }
 
   ngOnInit(): void {
@@ -238,12 +236,12 @@ export class Chart8Component implements OnInit, OnDestroy {
 
   setFeatures(){
     if (!this.geodata) { return; }
-    this.features = topojson.feature(this.geodata, this.geodata.objects['CNTR_RG_60M_2020_4326']);
+    this.features = topojson?.feature(this.geodata, this.geodata.objects['CNTR_RG_60M_2020_4326']) || [];
   }
 
   setDataFeatures() {
     const ids = new Set(this.data.data.map((d) => d.id));
-    this.dataFeatures = this.features.features?.filter((feature: any) => ids.has(this.getFeatureId(feature))) || [];
+    this.dataFeatures = this.features?.features?.filter((feature: any) => ids.has(this.getFeatureId(feature))) || [];
   }
 
   setLabels() {

@@ -1,12 +1,12 @@
-import { combineLatest, map, Observable, Subscription } from 'rxjs';
+import { combineLatest, Observable, Subscription } from 'rxjs';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ApiService } from './services/api.service';
-import { IPieConfig, IPieData, IGroupStackData, IGroupStackDataElem, IGroupStackConfig } from './interfaces/chart.interfaces';
+import { IPieData, IGroupStackData } from './interfaces/chart.interfaces';
 import { PieHelper } from './helpers/pie.helper';
 
-import * as d3 from 'd3';
 import { StackHelper } from './helpers/stack.helper';
 import { MapHelper } from './helpers/map.helper';
+import { SwarmHelper } from './helpers/swarm.helper';
 
 @Component({
   selector: 'app-root',
@@ -80,6 +80,11 @@ export class AppComponent implements OnInit, OnDestroy {
 
   covidMap = new MapHelper();
 
+  // swarm observables
+  demographics$: Observable<any> = new Observable();
+
+  swarmHelper = new SwarmHelper();
+
   constructor(private api: ApiService) {}
 
   ngOnInit(): void {
@@ -132,6 +137,24 @@ export class AppComponent implements OnInit, OnDestroy {
       this.covidMap.setData(data, codes);
     });
     
+    this.subscrtiptions.push(subs);
+
+    // swarm subscriptions
+    this.demographics$ = this.api.getDemographics();
+
+    subs = this.demographics$.subscribe((data: any) => {
+      // convert data
+      this.swarmHelper.setData(data,
+        'Demographics by country and year',
+        'year',
+        'code',
+        'name',
+        'median_age',
+        'continent',
+        'median age (years)',
+        1);
+    });
+
     this.subscrtiptions.push(subs);
   }
 

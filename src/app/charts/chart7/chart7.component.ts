@@ -3,41 +3,18 @@ import { Component, ElementRef, Input, OnChanges, OnInit, SimpleChanges } from '
 import * as d3 from 'd3';
 import { ChartDimensions } from 'src/app/helpers/chart.dimensions.helper';
 import ObjectHelper from 'src/app/helpers/object.helper';
-import { IGroupStackConfig, IGroupStackData, IGroupStackDataElem, IGroupStackRectData, ITooltipData } from 'src/app/interfaces/chart.interfaces';
+import { IGroupStackConfig, IGroupStackData, IGroupStackDataElem, IGroupStackRectData } from 'src/app/interfaces/chart.interfaces';
+import { ITooltipData, XTooltipPosition, YTooltipPosition } from 'src/app/interfaces/tooltip.interfaces';
+import { TooltipService } from 'src/app/services/tooltip.service';
 
 @Component({
   selector: 'app-chart7',
   template: `<svg class="chart7">
-    <g class="tooltipContainer">
-      <rect class="svg-tooltip__background"></rect>
-      <g class="svg-tooltip">
-        <text class="svg-tooltip__title"></text>
-        <rect class="svg-tooltip__symbol"></rect>
-        <text class="svg-tooltip__value"
-          [attr.y]="config.tooltip.labels.height + config.fontSize"
-          [attr.x]="config.tooltip.symbol.width + config.tooltip.labels.textSeparator"
-        >
-          <tspan class="svg-tooltip__value--key"></tspan>
-          <tspan class="svg-tooltip__value--value"></tspan>
-        </text>
-      </g>
-    </g>
+    <g class="tooltipContainer"></g>
     <style>
       .chart7 { font-size: {{config.fontSize}}px; }
       .chart7 text.title { font-weight: bold;}
       .chart7 rect { fill: unset; }
-      .chart7 .svg-tooltip__value--value {
-        font-size: {{config.tooltip.labels.fontSize}}px;
-        font-weight: bold;
-      }
-      .chart7 .svg-tooltip__background {
-        fill: {{config.tooltip.background.color}};
-        fill-opacity: {{config.tooltip.background.opacity}};
-        stroke: {{config.tooltip.background.stroke}};
-        stroke-width: {{config.tooltip.background.strokeWidth}}px;
-        rx: {{config.tooltip.background.rx}}px;
-        ry: {{config.tooltip.background.ry}}px;
-      }
       .chart7 rect.faded, .chart7 g.legend-item.faded {
         opacity: 0.3;
       }
@@ -46,7 +23,8 @@ import { IGroupStackConfig, IGroupStackData, IGroupStackDataElem, IGroupStackRec
       }
     </style>
   </svg>`,
-  styles: []
+  styles: [],
+  providers: [TooltipService]
 })
 export class Chart7Component implements OnInit, OnChanges {
 
@@ -64,7 +42,6 @@ export class Chart7Component implements OnInit, OnChanges {
   yAxisContainer: any;
   dataContainer: any;
   legendContainer: any;
-  tooltipContainer: any;
 
   // labels
   title: any;
@@ -135,11 +112,18 @@ export class Chart7Component implements OnInit, OnChanges {
         rx: 3,
         ry: 3
       },
+      title: {
+        fontSize: 12,
+        fontWeight: 'bold'
+      },
       labels: {
         symbolSize: 6,
         fontSize: 30,
         height: 30,
         textSeparator: 10
+      },
+      value: {
+        fontWeight: 'bold',
       },
       symbol: {
         width: 6,
@@ -177,10 +161,8 @@ export class Chart7Component implements OnInit, OnChanges {
     this._filteredData = values;
   }
 
-  constructor(element: ElementRef) {
+  constructor(element: ElementRef, protected tooltip: TooltipService) {
     this.host = d3.select(element.nativeElement);
-    console.log(this);
-    
    }
 
   ngOnInit(): void {
@@ -213,7 +195,7 @@ export class Chart7Component implements OnInit, OnChanges {
 
     this.dataContainer = this.svg.append('g').attr('class', 'dataContainer')
       .attr('transform', `translate(${this.dimensions.marginLeft}, ${this.dimensions.marginTop})`)
-      .on('mouseleave', this.hideTooltip);
+      .on('mouseleave', this.tooltip.hide);
 
     this.legendContainer = this.svg.append('g').attr('class', 'legendContainer')
       .attr('transform', `translate(${this.dimensions.marginLeft}, ${this.dimensions.marginBottom + 30})`);
@@ -224,13 +206,14 @@ export class Chart7Component implements OnInit, OnChanges {
       .style('text-anchor', 'middle');
 
     this.yLabel = this.svg.append('g').attr('class', 'yLabelContainer')
-    .attr('transform', `translate(${this.dimensions.marginLeft - 30}, ${this.dimensions.midHeight})`)
-    .append('text').attr('class', 'yLabel')
-    .style('text-anchor', 'middle')
-    .attr('transform', 'rotate(-90)');
+      .attr('transform', `translate(${this.dimensions.marginLeft - 30}, ${this.dimensions.midHeight})`)
+      .append('text').attr('class', 'yLabel')
+      .style('text-anchor', 'middle')
+      .attr('transform', 'rotate(-90)');
 
     // tooltip
-    this.tooltipContainer = this.svg.select('g.tooltipContainer')
+    this.tooltip.host = this.svg.select('g.tooltipContainer')
+      .style('visibility', 'hidden')
       .raise();
   }
 
@@ -444,7 +427,7 @@ export class Chart7Component implements OnInit, OnChanges {
       .attr('stroke', 'white')
       .style('fill', (d: any) => this.scales.color(d.index))
       .on('mouseenter', (event: any, data: any) => {
-        this.tooltip(event, data);
+        this.setTooltip(event, data);
         this.highlightRectangle(data);
       })
       .transition()
@@ -462,7 +445,51 @@ export class Chart7Component implements OnInit, OnChanges {
   }
 
   // tooltip
-  tooltip = (event: MouseEvent, data: IGroupStackRectData): void => {
+  setTooltip = (event: MouseEvent, data: any) => {
+    // set the data
+    const value = Math.round(10 * data.value) / 10 + ' ' + this.data.unit;
+
+    const title = (this.grouped && this.stacked) ? data.group + ' ' + data.domain : data.domain;
+
+    const key = this.stacked ? data.stack : (this.grouped ? data.group : null) as string;
+
+    this.tooltip.data = {
+      title,
+      color: this.scales.color(data.index),
+      key,
+      value
+    };
+
+    // position the tooltip
+    this.moveTooltip(event);
+
+    // show the tooltip
+    this.tooltip.show();
+  }
+
+  moveTooltip = (event: MouseEvent) => {
+    const coords = d3.pointer(event, this.svg.node());
+
+    const position = {
+      x: coords[0],
+      y: coords[1],
+      xPosition: this.xTooltipAlignment(coords[0]),
+      yPosition: YTooltipPosition.middle
+    };
+
+    this.tooltip.position = position;
+  }
+
+  xTooltipAlignment = (x: number): XTooltipPosition => {
+/*     if (x > this.dimensions.midWidth) {
+      return XTooltipPosition.left;
+    } else {
+      return XTooltipPosition.right;
+    } */
+
+    return x > this.dimensions.midWidth ? XTooltipPosition.left : XTooltipPosition.right;
+  }
+ /*  tooltip = (event: MouseEvent, data: IGroupStackRectData): void => {
 
     this.showTooltip();
 
@@ -550,7 +577,7 @@ export class Chart7Component implements OnInit, OnChanges {
   hideTooltip = () => {
     this.tooltipContainer.style('visibility', 'hidden');
     this.resetHighlights();
-  }
+  } */
 
   // highlight
   highlightRectangle = (data: IGroupStackRectData): void => {
