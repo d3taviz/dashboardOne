@@ -1,8 +1,11 @@
 import { Observable } from 'rxjs';
 import { Component, OnInit } from '@angular/core';
 import { ApiService } from './services/api.service';
-import { IPieConfig, IPieData } from './interfaces/chart.interfaces';
+import { IPieConfig, IPieData, IGroupStackData, IGroupStackDataElem, IGroupStackConfig } from './interfaces/chart.interfaces';
 import { PieHelper } from './helpers/pie.helper';
+
+import * as d3 from 'd3';
+import { StackHelper } from './helpers/stack.helper';
 
 @Component({
   selector: 'app-root',
@@ -38,6 +41,35 @@ export class AppComponent implements OnInit {
 
   population$: Observable<any>;
 
+  population;
+
+  stackedData: IGroupStackData;
+
+  stackOptions = [
+    {
+      label: 'Year (grouped)',
+      value: 'year/gender/age_group/'
+    }, {
+      label: 'Year (no group - stacked)',
+      value: 'year//age_group/'
+    }, {
+      label: 'Year (grouped - no stack)',
+      value: 'year/age_group//'
+    }, {
+      label: 'Year (no group - no stack)',
+      value: 'year///'
+    }, {
+      label: 'Countries 2012',
+      value: 'country/gender/age_group/2012'
+    }, {
+      label: 'Country 2006',
+      value: 'country/gender/age_group/2006'
+    }, {
+      label: 'Country (no group - stacked)',
+      value: 'country//age_group/2012'
+    }
+  ];
+
   constructor(private api: ApiService) {}
 
   ngOnInit(): void {
@@ -58,7 +90,10 @@ export class AppComponent implements OnInit {
 
     this.population$ = this.api.getParsedData('assets/population.csv');
 
-    this.population$.subscribe(c => console.log(c));
+    this.population$.subscribe(data => {
+      this.population = data;
+      this.setStackedData('year/gender/age_group/');
+    });
 
     setTimeout(
       () => {
@@ -86,4 +121,24 @@ export class AppComponent implements OnInit {
     const valueAttr = typeof event === 'string' ? event : event.target.value;
     this.pieData = PieHelper.convert(this.browser, "Browser market share", valueAttr, 'name', 'name');
   }
+
+  setStackedData(event) {
+    const valueAttr = typeof event === 'string' ? event : event.target.value;
+
+    const [domain, group, stack, year] = valueAttr.split('/');
+
+    const population = year == '' ? this.population : this.population.filter((d) => d.year === year);
+
+    const data = StackHelper.SetStacks(population, domain, group, stack, 'value', (val) => val/1e6);
+
+      this.stackedData = {
+        title: ' Population by year, gender and age group (in millions)',
+        yLabel: 'Population (millions)',
+        unit: 'million',
+        data,
+        stackOrder: ['<3', '4', '5-9', '10-14', '15-19', '20-24', '25-29', '30-34', '35-39', '>=40']
+      };
+
+  }
+
 }

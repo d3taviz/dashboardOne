@@ -35,3 +35,71 @@ export interface IPieConfig {
   };
   margins: IChartMargins;
 }
+
+export interface IGroupStackDataElem {
+  key?: string;
+  domain: string;
+  group: string;
+  stack: string;
+  value: number;
+}
+
+export interface IGroupStackData {
+  title: string;
+  yLabel: string;
+  unit: string;
+  data: IGroupStackDataElem[];
+  stackOrder: string[];
+}
+
+export interface IGroupStackConfig {
+  hiddenOpacity: number;
+  fontSize: number;
+  margins: IChartMargins;
+  tooltip: ITooltipConfig;
+  transitions: {
+    normal: number;
+    slow: number;
+  };
+}
+
+export interface IGroupStackRectData extends IGroupStackDataElem{
+  min: number;
+  max: number;
+  key: string;
+  index: number;
+}
+
+export interface ITooltipData {
+  title: string;
+  color: string;
+  key: string;
+  value: number | string;
+}
+
+export interface ITooltipConfig {
+  background: {
+    xPadding: number;
+    yPadding: number;
+    color: string;
+    opacity: number;
+    stroke: string;
+    strokeWidth: number;
+    rx: number;
+    ry: number;
+  };
+  labels: {
+    symbolSize: number;
+    fontSize: number;
+    height: number;
+    textSeparator: number;
+  };
+  symbol: {
+    width: number;
+    height: number;
+  };
+  offset: {
+    x: number;
+    y: number;
+  };
+}
