@@ -12,6 +12,8 @@ import { Chart5Component } from './charts/chart5/chart5.component';
 import { Chart6Component } from './charts/chart6/chart6.component';
 import { Chart7Component } from './charts/chart7/chart7.component';
 import { Chart8Component } from './charts/chart8/chart8.component';
+import { TimelineTooltipComponent } from './components/timeline-tooltip/timeline-tooltip.component';
+import { PlaySliderComponent } from './components/play-slider/play-slider.component';
 
 @NgModule({
   declarations: [
@@ -24,6 +26,8 @@ import { Chart8Component } from './charts/chart8/chart8.component';
     Chart6Component,
     Chart7Component,
     Chart8Component,
+    TimelineTooltipComponent,
+    PlaySliderComponent,
   ],
   imports: [
     BrowserModule,

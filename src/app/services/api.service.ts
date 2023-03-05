@@ -51,4 +51,19 @@ export class ApiService {
     const url = 'assets/browsers.json';
     return this.getJson(url);
   }
+
+  getCountriesGeoData(): Observable<any> {
+    const url = 'assets/CNTR_RG_60M_2020_4326.json';
+    return this.getJson(url);
+  }
+
+  getCovidByCountry(): Observable<any> {
+    const url = 'assets/megafile--deaths.json';
+    return this.getJson(url);
+  }
+
+  getCountryCodes(): Observable<any> {
+    const url = 'assets/mapcountries.json';
+    return this.getJson(url);
+  }
 }

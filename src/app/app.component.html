@@ -57,7 +57,31 @@
     </div>
     <div class="col-4">
       <div class="chart">
-        <app-chart8></app-chart8>
+        <div class="chart-body">
+          <app-chart8 [geodata]="geoCountries$ | async"
+          [data]="covidMap.data" 
+          (tooltip)="covidMap.tooltip($event)"
+        ></app-chart8>
+        </div>
+        <div class="chart-controller">
+          <app-play-slider
+            [min]="covidMap.sliderState.min"
+            [max]="covidMap.sliderState.max"
+            [step]="covidMap.sliderState.step"
+            [speed]="covidMap.sliderState.speed"
+            [value]="covidMap.currentDate"
+            (changeValue)="covidMap.setMapData($event)"
+          ></app-play-slider>
+        </div>
+        <div class="map-tooltip"
+          [ngStyle]="{
+            visibility: covidMap.tooltipState.visible ? '' : 'hidden',
+            'left.px': covidMap.tooltipState.x,
+            'top.px': covidMap.tooltipState.y
+          }"
+        >
+          <app-timeline-tooltip [data]="covidMap.tooltipData"></app-timeline-tooltip>
+        </div>
       </div>
     </div>
   </div>
