@@ -19,7 +19,7 @@ import { TooltipService } from 'src/app/services/tooltip.service';
         opacity: 0.3;
       }
       .chart7 rect.data {
-        transition: opacity {{config.transitions.normal}};
+        transition: opacity {{config.transitions.normal}}ms;
       }
     </style>
   </svg>`,
@@ -430,6 +430,7 @@ export class Chart7Component implements OnInit, OnChanges {
         this.setTooltip(event, data);
         this.highlightRectangle(data);
       })
+      .on('mouseleave', () => this.resetHighlights())
       .transition()
       .duration(this.config.transitions.slow)
       .attr('y', (d: any) => this.scales.y(d.max))
